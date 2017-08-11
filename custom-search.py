@@ -52,10 +52,9 @@ def google_custom_search_crawler(query,page_limit):
     cx="&cx=013003672663057511130:ewkefht62rk"
     q ="&q="+query
     cse_tok = "&cse_tok=ahl74mxjun1-rdpgntn7igqyvwtn:1502359101089"
-    
+    sort = "&sort=date"   #sort by 
     for npage in range(0,page_limit):
-        temp =requests.get(query_url+ key+results_num+language+Print+source+sig+start+str(result_index)+cx+q+cse_tok)
-        print(query_url+ key+results_num+language+Print+source+sig+start+str(result_index)+cx+q+cse_tok)
+        temp =requests.get(query_url+ key+results_num+language+Print+source+sig+start+str(result_index)+cx+q+cse_tok+sort)
         response.append(temp.text)
         result_index = result_index +10     
     
@@ -74,4 +73,21 @@ def google_custom_search_crawler(query,page_limit):
     
     return link_data
 
+def crawler_content(link_data): #path should rename content_link
+    content = [] 
+
+    for link in link_data:
+        link = link.strip("https//:www.ptt.cc")
+        payload = {"from": link , "yes": "yes"}
+        res = requests.post("https://www.ptt.cc/ask/over18",data=payload)
+        res.encoding = 'usf8'
+        content.append(res.text)
+
+    return content
+
+
+
+
+
+print(crawler_content(google_custom_search_crawler("heaviest",1)))
 
