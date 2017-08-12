@@ -77,8 +77,8 @@ def crawler_content(link_data): #path should rename content_link
     content = [] 
 
     for link in link_data:
-        link = link.strip("https//:www.ptt.cc")
-        payload = {"from": link , "yes": "yes"}
+        link = '/' + link.strip("https//:www.ptt.cc")
+        payload = {"from":  link , "yes": "yes"}
         res = requests.post("https://www.ptt.cc/ask/over18",data=payload)
         res.encoding = 'usf8'
         content.append(res.text)
