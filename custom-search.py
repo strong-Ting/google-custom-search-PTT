@@ -85,7 +85,31 @@ def crawler_content(link_data): #path should rename content_link
     for link in link_data:
         link = '/' + link.strip("https//:www.ptt.cc")
         payload = {"from":  link , "yes": "yes"}
+        start_requests = time.time()
         res = requests.post("https://www.ptt.cc/ask/over18",data=payload)
+        end_requests = time.time()
+        time_request = end_requests - start_requests
+        print("requsets:",time_request)
+        res.encoding = 'usf8'
+        content.append(res.text)
+    end_time = time.time()
+    time_cost = end_time - start_time
+    print("crawler_content:",time_cost)
+    return content
+def crawler_content_improve(link_data): #path should rename content_link
+    start_time = time.time()
+    content = [] 
+
+    for link in link_data:
+    #    link = '/' + link.strip("https//:www.ptt.cc")
+        payload = {"from":  link , "yes": "yes"}
+        start_requests = time.time()
+   #     res = requests.post("https://www.ptt.cc/ask/over18",data=payload)
+        VERIFY = False
+        res = requests.get(url=link, cookies={'over18': '1'}, verify=VERIFY)      
+        end_requests = time.time()
+        time_request = end_requests - start_requests
+        print("requsets:",time_request)
         res.encoding = 'usf8'
         content.append(res.text)
     end_time = time.time()
@@ -105,6 +129,12 @@ def analysis_content(content_list):
     title_index_end = "</span>"
     ip_index_start='<span class="f2">※ 發信站: 批踢踢實業坊(ptt.cc), 來自: ' 
     ip_index_end='</span>' 
+    date_index_start ='時間</span><span class="article-meta-value">'
+    date_index_end = '</span></div>'
+    board_index_start ='看板</span><span class="article-meta-value">'
+    board_index_end = '</span></div>'
+    author_index_start = '作者</span><span class="article-meta-value">'
+    author_index_end ='</span></div>'
     ''' 
     title_end = 100000
     content = content_list[0]
@@ -118,30 +148,62 @@ def analysis_content(content_list):
         title_start = 0
         ip_start=0
         ip_end=0
-
+        date_start = 0
+        date_end = 0
+        board_start =0
+        board_end =0
+        author_start=0
+        author_end =0
         exception = False
         while exception != True:
             try:
                 title_start = content.index(title_index_start,title_end) + len(title_index_start)
                 title_end = content.index(title_index_end,title_start)
+                title.append(content[title_start:title_end])
+
                 ip_start = content.index(ip_index_start,ip_end)+len(ip_index_start)
                 ip_end = content.index(ip_index_end,ip_start)
                 ip.append(content[ip_start:ip_end].strip('\n'))
+                
+                date_start = content.index(date_index_start,date_end)+len(date_index_start)
+                date_end = content.index(date_index_end,date_start)
+                date.append(content[date_start:date_end])
+                
+                board_start=content.index(board_index_start,board_end)+len(board_index_start)
+                board_end = content.index(board_index_end,board_start)
+                board.append(content[board_start:board_end])
+
+                author_start = content.index(author_index_start,author_end)+len(author_index_start)
+                author_end = content.index(author_index_end,author_start)
+
+                ID_content.append(content[author_start:author_end])
  #                print(content[title_start:title_end])
-                title.append(content[title_start:title_end])
             except ValueError:
                 exception = True
     end_time =time.time()
     time_cost=end_time-start_time
     print("analysis:",time_cost)
+    
+    '''
+    content = content_list[0]
+    author_start = content.index(author_index_start,author_end)+len(author_index_start)
+    author_end = content.index(author_index_end,author_start)
+    
+    print('eeeeeeeeeeeeeeeeeeeeeee')
+    print(content[author_start:author_end])
+    print('eeeeeeeeeeeeeeeeeeeeeee')
+    '''
+
+#    return title,len(title),ip,len(ip),ID_content,len(ID_content),date,len(date),board,len(board)
+
     return title,ip,ID_content,date,board
 
 
 #f = open("./content.html","w")
 #f.write(crawler_content(google_custom_search_crawler("heaviest",1)))
 start_time = time.time()
-analysis_content(crawler_content(google_custom_search_crawler("heaviest",10)))
-#print(analysis_content(crawler_content(google_custom_search_crawler("heaviest",1))))
+#analysis_content(crawler_content_improve(google_custom_search_crawler("heaviest",10)))
+print(analysis_content(crawler_content_improve(google_custom_search_crawler("heaviest",1))))
 end_time = time.time()
 time_cost=end_time-start_time
 print("sum:",time_cost)
