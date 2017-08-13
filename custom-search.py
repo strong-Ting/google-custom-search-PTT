@@ -46,7 +46,7 @@ def google_custom_search_crawler(query,page_limit):
     query_url = "https://www.googleapis.com/customsearch/v1element?"
     key = "key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY"
     rsz ="&rsz=filtered_cse" #no use
-    results_num = "&num=10"
+    results_num = "&num=3"
     language = "&hl=zh_TW"
     Print = "&prettyPrint=true"
     source = "&source=gcsc&gss=.com"
@@ -76,6 +76,7 @@ def google_custom_search_crawler(query,page_limit):
     end_time = time.time()
     time_cost = end_time - start_time
     print("custom:",time_cost)
+    print(link_data)
     return link_data
 
 def crawler_content(link_data): #path should rename content_link
@@ -96,6 +97,7 @@ def crawler_content(link_data): #path should rename content_link
     time_cost = end_time - start_time
     print("crawler_content:",time_cost)
     return content
+
 def crawler_content_improve(link_data): #path should rename content_link
     start_time = time.time()
     content = [] 
@@ -115,7 +117,7 @@ def crawler_content_improve(link_data): #path should rename content_link
     end_time = time.time()
     time_cost = end_time - start_time
     print("crawler_content:",time_cost)
-    return content
+    return content,link_data
 
 def analysis_content(content_list):
     start_time = time.time()
@@ -124,6 +126,10 @@ def analysis_content(content_list):
     ID_content = []
     date = []
     board = []
+    author = []
+    ID_push = []
+    ID_push_time = None
+    ID = 'heaviest'
 
     title_index_start ='<span class="article-meta-tag">標題</span><span class="article-meta-value">' 
     title_index_end = "</span>"
@@ -134,7 +140,14 @@ def analysis_content(content_list):
     board_index_start ='看板</span><span class="article-meta-value">'
     board_index_end = '</span></div>'
     author_index_start = '作者</span><span class="article-meta-value">'
-    author_index_end ='</span></div>'
+#    author_index_end ='</span></div>'
+    author_index_end =" "
+    push_mark_index_start = '<span class="f1 hl push-tag">'
+    push_index_start ='</span><span class="f3 hl push-userid">'+ID+'</span><span class="f3 push-content">:'
+    push_index_end = '</span>' 
+    
+    push_time_index_start ='<span class="push-ipdatetime">'
+    push_time_index_end = '</span>' 
     ''' 
     title_end = 100000
     content = content_list[0]
@@ -144,6 +157,7 @@ def analysis_content(content_list):
     '''     
         
     for content in content_list:
+
         title_end  = 0
         title_start = 0
         ip_start=0
@@ -154,13 +168,20 @@ def analysis_content(content_list):
         board_end =0
         author_start=0
         author_end =0
+        push_mark_start=0
+        push_mark_end=0
+        push_start=0
+        push_end=0     
+        push_time_start =0
+        push_time_end = 0
+
+        ID_push_len = len(ID_push)
         exception = False
         while exception != True:
             try:
                 title_start = content.index(title_index_start,title_end) + len(title_index_start)
                 title_end = content.index(title_index_end,title_start)
                 title.append(content[title_start:title_end])
-
                 ip_start = content.index(ip_index_start,ip_end)+len(ip_index_start)
                 ip_end = content.index(ip_index_end,ip_start)
                 ip.append(content[ip_start:ip_end].strip('\n'))
@@ -175,11 +196,40 @@ def analysis_content(content_list):
 
                 author_start = content.index(author_index_start,author_end)+len(author_index_start)
                 author_end = content.index(author_index_end,author_start)
+                author.append(content[author_start:author_end])
 
-                ID_content.append(content[author_start:author_end])
+                push_time_start = content.index(push_time_index_start,push_time_end) + len(push_time_index_start)
+                push_time_end = content.index(push_time_index_end,push_time_start)
+                push_time = content[push_time_start:push_time_end]
+
+                push_start = content.index(push_index_start,push_end)
+                push_mark_end = push_start
+                push_start = push_start + len(push_index_start)
+                push_end = content.index(push_index_end,push_start)
+                push_mark_start = push_mark_end -2
+                
+                ID_push_content =  content[push_mark_start:push_mark_end]+ID+":"+content[push_start:push_end]+'      '+push_time
+     #           print(ID_push_content,type(push_start),push_end)
+                ID_push.append(ID_push_content)
  #                print(content[title_start:title_end])
+                
+
             except ValueError:
                 exception = True
+                if ID_push_len == len(ID_push):
+                    ID_push.append("None")
+            ID_push_content = ID_push[len(ID_push)-1]
+            
+            if ID == author[len(author)-1]:
+                ID_content.append('post')
+            elif ID_push_content == "None":
+                ID_content.append('None')
+            elif ID_push_content == ID_content[len(ID_content)-1]:
+                pass
+            else:
+                ID_content.append(ID_push_content)
+            
+                        
     end_time =time.time()
     time_cost=end_time-start_time
     print("analysis:",time_cost)
@@ -196,14 +246,24 @@ def analysis_content(content_list):
 
 #    return title,len(title),ip,len(ip),ID_content,len(ID_content),date,len(date),board,len(board)
 
-    return title,ip,ID_content,date,board
+    return title,ip,author,ID_content,date,board,ID_push
+def test():
+    n = '\n'
+    content,link_data = crawler_content_improve(google_custom_search_crawler("heaviest",5))
+    title,ip,author,ID_content,date,board,ID_push = analysis_content(content)
+    f = open("./test.log",'w')
+    for i in range(0,14):
+        write_down = title[i]+n+ip[i]+n+author[i]+n+ID_content[i]+n+date[i]+n+board[i]+n+ID_push[i]+n+link_data[i]+n+n+n
+        f.write(write_down)
+
 
 
 #f = open("./content.html","w")
 #f.write(crawler_content(google_custom_search_crawler("heaviest",1)))
 start_time = time.time()
 #analysis_content(crawler_content_improve(google_custom_search_crawler("heaviest",10)))
-print(analysis_content(crawler_content_improve(google_custom_search_crawler("heaviest",1))))
+#print(analysis_content(crawler_content_improve(google_custom_search_crawler("heaviest",1))))
+test()
 end_time = time.time()
 time_cost=end_time-start_time
 print("sum:",time_cost)
