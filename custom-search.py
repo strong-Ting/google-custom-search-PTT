@@ -35,10 +35,9 @@ def google_custom_search_api(q,pageLimit):
             link_data.append(each_data['link'])
     return link_data
 
-def google_custom_search_crawler(query,page_limit):
+def google_custom_search_crawler(query,one_query_num,page_limit):
     start_time = time.time()
-
-    result_index_limit = int(page_limit)*10
+    result_index_limit = int(page_limit)*one_query_num
     result_index = 0
     response = []
     link_data=[]
@@ -46,7 +45,7 @@ def google_custom_search_crawler(query,page_limit):
     query_url = "https://www.googleapis.com/customsearch/v1element?"
     key = "key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY"
     rsz ="&rsz=filtered_cse" #no use
-    results_num = "&num=3"
+    results_num = "&num="+str(one_query_num)
     language = "&hl=zh_TW"
     Print = "&prettyPrint=true"
     source = "&source=gcsc&gss=.com"
@@ -59,7 +58,7 @@ def google_custom_search_crawler(query,page_limit):
     for npage in range(0,page_limit):
         temp =requests.get(query_url+ key+results_num+language+Print+source+sig+start+str(result_index)+cx+q+cse_tok+sort)
         response.append(temp.text)
-        result_index = result_index +10     
+        result_index = result_index +one_query_num
     
     for page in range(0,page_limit): #take every data of  page from response
         page_data = response[page] 
@@ -107,7 +106,7 @@ def crawler_content_improve(link_data): #path should rename content_link
         payload = {"from":  link , "yes": "yes"}
         start_requests = time.time()
    #     res = requests.post("https://www.ptt.cc/ask/over18",data=payload)
-        VERIFY = False
+        VERIFY = True
         res = requests.get(url=link, cookies={'over18': '1'}, verify=VERIFY)      
         end_requests = time.time()
         time_request = end_requests - start_requests
@@ -247,14 +246,164 @@ def analysis_content(content_list):
 #    return title,len(title),ip,len(ip),ID_content,len(ID_content),date,len(date),board,len(board)
 
     return title,ip,author,ID_content,date,board,ID_push
+
+def analysis_content_improve(content_list):
+    start_time = time.time()
+    all_list = []
+    ID_push_time = None
+    ID = 'heaviest'
+
+    title_index_start ='<span class="article-meta-tag">標題</span><span class="article-meta-value">' 
+    title_index_end = "</span>"
+    ip_index_start='<span class="f2">※ 發信站: 批踢踢實業坊(ptt.cc), 來自: ' 
+    ip_index_end='</span>' 
+    date_index_start ='時間</span><span class="article-meta-value">'
+    date_index_end = '</span></div>'
+    board_index_start ='看板</span><span class="article-meta-value">'
+    board_index_end = '</span></div>'
+    author_index_start = '作者</span><span class="article-meta-value">'
+#    author_index_end ='</span></div>'
+    author_index_end =" "
+    push_mark_index_start = '<span class="f1 hl push-tag">'
+    push_index_start ='</span><span class="f3 hl push-userid">'+ID+'</span><span class="f3 push-content">:'
+    push_index_end = '</span>' 
+    
+    push_time_index_start ='<span class="push-ipdatetime">'
+    push_time_index_end = '</span>' 
+    ''' 
+    title_end = 100000
+    content = content_list[0]
+    title_start = content.index(title_index_start,title_end) + len(title_index_start)
+    title_end = content.index(title_index_end,title_start)
+    print(content[title_start:title_end])
+    '''     
+        
+    for content in content_list:
+        
+        title_end  = 0
+        title_start = 0
+        ip_start=0
+        ip_end=0
+        date_start = 0
+        date_end = 0
+        board_start =0
+        board_end =0
+        author_start=0
+        author_end =0
+        push_mark_start=0
+        push_mark_end=0
+        push_start=0
+        push_end=0     
+        push_time_start =0
+        push_time_end = 0
+
+        temp_list = []    
+        
+        is_content = True
+        try:
+        
+            title_start = content.index(title_index_start,title_end) + len(title_index_start)
+            title_end = content.index(title_index_end,title_start)
+            title =  content[title_start:title_end]               
+
+            temp_list.append(title)
+                
+            ip_start = content.index(ip_index_start,ip_end)+len(ip_index_start)
+            ip_end = content.index(ip_index_end,ip_start)
+            ip = content[ip_start:ip_end].strip('\n')
+
+            temp_list.append(ip)
+               
+                
+            date_start = content.index(date_index_start,date_end)+len(date_index_start)
+            date_end = content.index(date_index_end,date_start)
+            date = content[date_start:date_end]
+
+            temp_list.append(date)
+                
+            board_start=content.index(board_index_start,board_end)+len(board_index_start)
+            board_end = content.index(board_index_end,board_start)
+            board = content[board_start:board_end]
+            temp_list.append(board)
+
+            author_start = content.index(author_index_start,author_end)+len(author_index_start)
+            author_end = content.index(author_index_end,author_start)
+            author = content[author_start:author_end]
+            temp_list.append(author)
+        except ValueError:
+            temp_list.append("not content")
+            is_content = False
+
+        if is_content:
+            try:   #now only craw one push content
+
+                push_time_start = content.index(push_time_index_start,push_time_end) + len(push_time_index_start)
+                push_time_end = content.index(push_time_index_end,push_time_start)
+                push_time = content[push_time_start:push_time_end]
+
+                push_start = content.index(push_index_start,push_end)
+                push_mark_end = push_start
+                push_start = push_start + len(push_index_start)
+                push_end = content.index(push_index_end,push_start)
+                push_mark_start = push_mark_end -2
+                
+                ID_push_content =  content[push_mark_start:push_mark_end]+ID+":"+content[push_start:push_end]+'      '+push_time
+                temp_list.append(ID_push_content)
+ 
+            except ValueError:
+                ID_push_content = "None"
+                temp_list.append(ID_push_content)
+
+            
+            if ID == author:
+                temp_list.append('post')
+            else:
+                temp_list.append(ID_push_content)
+            
+        all_list.append(temp_list)
+
+    end_time =time.time()
+    time_cost=end_time-start_time
+    print("analysis:",time_cost)
+    
+    '''
+    content = content_list[0]
+    author_start = content.index(author_index_start,author_end)+len(author_index_start)
+    author_end = content.index(author_index_end,author_start)
+    
+    print('eeeeeeeeeeeeeeeeeeeeeee')
+    print(content[author_start:author_end])
+    print('eeeeeeeeeeeeeeeeeeeeeee')
+    '''
+
+#    return title,len(title),ip,len(ip),ID_content,len(ID_content),date,len(date),board,len(board)
+    return all_list
+
+
+
 def test():
     n = '\n'
-    content,link_data = crawler_content_improve(google_custom_search_crawler("heaviest",5))
+    content,link_data = crawler_content_improve(google_custom_search_crawler("heaviest",3,5))
     title,ip,author,ID_content,date,board,ID_push = analysis_content(content)
     f = open("./test.log",'w')
-    for i in range(0,14):
+    for i in range(0,len(title)):
         write_down = title[i]+n+ip[i]+n+author[i]+n+ID_content[i]+n+date[i]+n+board[i]+n+ID_push[i]+n+link_data[i]+n+n+n
         f.write(write_down)
+    len_write = str(len(title))+str(len(ip))+str(len(author))+str(len(ID_content))+str(len(date))+str(len(board))+str(len(ID_push))
+    f.write(len_write)
+
+def test_analysis_improve():
+    n = '\n'
+    content,link_data = crawler_content_improve(google_custom_search_crawler("heaviest",3,5))
+    all_list = analysis_content_improve(content)
+    print(all_list)
+    f = open("./test.log",'w')
+    for i  in range (0,len(all_list)):
+        f.write(n+n+n)
+        f.write(link_data[i]+n)
+        for now in all_list[i]:
+            f.write(now)
+            f.write(n)
 
 
 
@@ -263,7 +412,8 @@ def test():
 start_time = time.time()
 #analysis_content(crawler_content_improve(google_custom_search_crawler("heaviest",10)))
 #print(analysis_content(crawler_content_improve(google_custom_search_crawler("heaviest",1))))
-test()
+#test()
+test_analysis_improve()
 end_time = time.time()
 time_cost=end_time-start_time
 print("sum:",time_cost)

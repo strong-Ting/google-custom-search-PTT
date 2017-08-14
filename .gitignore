@@ -1,5 +1,5 @@
 *.swp
 *.html
 error
-.log
+*.log
 *.swo
