@@ -75,7 +75,6 @@ def google_custom_search_crawler(query,one_query_num,page_limit):
     end_time = time.time()
     time_cost = end_time - start_time
     print("custom:",time_cost)
-    print(link_data)
     return link_data
 
 def crawler_content(link_data): #path should rename content_link
@@ -102,7 +101,7 @@ def crawler_content_improve(link_data): #path should rename content_link
     content = [] 
 
     for link in link_data:
-    #    link = '/' + link.strip("https//:www.ptt.cc")
+   #    link = '/' + link.strip("https//:www.ptt.cc")
         payload = {"from":  link , "yes": "yes"}
         start_requests = time.time()
    #     res = requests.post("https://www.ptt.cc/ask/over18",data=payload)
@@ -264,8 +263,14 @@ def analysis_content_improve(content_list):
     author_index_start = '作者</span><span class="article-meta-value">'
 #    author_index_end ='</span></div>'
     author_index_end =" "
-    push_mark_index_start = '<span class="f1 hl push-tag">'
-    push_index_start ='</span><span class="f3 hl push-userid">'+ID+'</span><span class="f3 push-content">:'
+    push_mark_index_start = 'push-tag">'
+    push_mark_index_end = '</span><span class="f3 hl push-userid">'
+
+
+    push_ID_index_start = '</span><span class="f3 hl push-userid">'
+    push_ID_index_end = '</span><span class="f3 push-content">'
+
+    push_index_start = push_ID_index_end
     push_index_end = '</span>' 
     
     push_time_index_start ='<span class="push-ipdatetime">'
@@ -279,7 +284,8 @@ def analysis_content_improve(content_list):
     '''     
         
     for content in content_list:
-        
+
+
         title_end  = 0
         title_start = 0
         ip_start=0
@@ -296,7 +302,11 @@ def analysis_content_improve(content_list):
         push_end=0     
         push_time_start =0
         push_time_end = 0
+        push_ID_start = 0
+        push_ID_end = 0        
 
+        push_mark = None
+    
         temp_list = []    
         
         is_content = True
@@ -336,18 +346,34 @@ def analysis_content_improve(content_list):
 
         if is_content:
             try:   #now only craw one push content
+                push_ID = None
+                
+                while(push_ID != ID):    
 
-                push_time_start = content.index(push_time_index_start,push_time_end) + len(push_time_index_start)
+                    push_ID_start = content.index(push_ID_index_start,push_ID_end) +len(push_ID_index_start)
+                    push_ID_end = content.index(push_ID_index_end,push_ID_start)
+                    push_ID = content[push_ID_start:push_ID_end].strip()
+
+
+                push_mark_start = content.rindex(push_mark_index_start,0,push_ID_start) +len(push_mark_index_start)
+                push_mark_end = content.index(push_mark_index_end,push_mark_start)
+                push_mark = content[push_mark_start:push_mark_end]
+
+                print('push_ID_site:',push_ID_start,push_ID_end)
+                print("push_mark_site",push_mark_start,push_mark_end)
+
+
+                push_start = content.index(push_index_start,push_ID_end)
+                push_start = push_start + len(push_index_start)
+                push_end = content.index(push_index_end,push_start)
+                push = content[push_start:push_end].strip("\n")
+
+                push_time_start = content.index(push_time_index_start,push_end) + len(push_time_index_start)
                 push_time_end = content.index(push_time_index_end,push_time_start)
                 push_time = content[push_time_start:push_time_end]
 
-                push_start = content.index(push_index_start,push_end)
-                push_mark_end = push_start
-                push_start = push_start + len(push_index_start)
-                push_end = content.index(push_index_end,push_start)
-                push_mark_start = push_mark_end -2
-                
-                ID_push_content =  content[push_mark_start:push_mark_end]+ID+":"+content[push_start:push_end]+'      '+push_time
+    
+                ID_push_content =push_mark+ push_ID +push+push_time
                 temp_list.append(ID_push_content)
  
             except ValueError:
@@ -394,9 +420,12 @@ def test():
 
 def test_analysis_improve():
     n = '\n'
-    content,link_data = crawler_content_improve(google_custom_search_crawler("heaviest",3,5))
+    test_link = ['http://www.ptt.cc/bbs/PC_Shopping/M.1488717900.A.525.html']
+    content,link_data = crawler_content_improve(google_custom_search_crawler("heaviest",10,20))
     all_list = analysis_content_improve(content)
-    print(all_list)
+#    content,link_data= crawler_content_improve(test_link)
+#    all_list = analysis_content_improve(content)
+ #   print(all_list)
     f = open("./test.log",'w')
     for i  in range (0,len(all_list)):
         f.write(n+n+n)
