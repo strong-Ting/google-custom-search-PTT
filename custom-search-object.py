@@ -2,38 +2,37 @@ import json
 import requests
 from googleapiclient.discovery import build
 import time
+class custom_api():
 
-def getService():
-    service = build("customsearch", "v1",
-            developerKey="AIzaSyCyEJRAuPmPp6zOxHe4kbBP1sUu2ldj0yI")
+    def getService():
+        service = build("customsearch", "v1",
+                developerKey="AIzaSyCyEJRAuPmPp6zOxHe4kbBP1sUu2ldj0yI")
 
-    return service
+        return service
 
-def google_custom_search_api(q,pageLimit):
+    def google_custom_search_api(q,pageLimit):
 
-    pageLimit = 1
-    service = getService()
-    startIndex = 1
-    response = []
-    link_data = []
+        pageLimit = 1
+        service = getService()
+        startIndex = 1
+        response = []
+        link_data = []
 
-    for nPage in range(0, pageLimit):
-        print ("Reading page number:",nPage+1)
-        response.append(service.cse().list(
-#            q='heaviest', #Search words
-            cx='013003672663057511130:ewkefht62rk',  #CSE Key
-         #   lr='lang_pt', #Search language
-            start=startIndex
-        ).execute())
+        for nPage in range(0, pageLimit):
+            print ("Reading page number:",nPage+1)
+            response.append(service.cse().list(
+                cx='013003672663057511130:ewkefht62rk',  #CSE Key
+                start=startIndex
+            ).execute())
 
-        startIndex = response[nPage].get("queries").get("nextPage")[0].get("startIndex")
+            startIndex = response[nPage].get("queries").get("nextPage")[0].get("startIndex")
 
-    for page in range(0,pageLimit): #take every data of  page from response
-        page_data = response[page] 
-        query_data = page_data['items'] # take value of key:item 
-        for each_data in query_data: #take value of key:link
-            link_data.append(each_data['link'])
-    return link_data
+        for page in range(0,pageLimit): #take every data of  page from response
+            page_data = response[page] 
+            query_data = page_data['items'] # take value of key:item 
+            for each_data in query_data: #take value of key:link
+                link_data.append(each_data['link'])
+        return link_data
 
 def google_custom_search_crawler(query,one_query_num,page_limit):
     start_time = time.time()
@@ -246,11 +245,10 @@ def analysis_content(content_list):
 
     return title,ip,author,ID_content,date,board,ID_push
 
-def analysis_content_improve(content_list):
+def analysis_content_improve(content_list,ID):
     start_time = time.time()
     all_list = []
     ID_push_time = None
-    ID = 'heaviest'
 
     title_index_start ='<span class="article-meta-tag">標題</span><span class="article-meta-value">' 
     title_index_end = "</span>"
@@ -359,8 +357,8 @@ def analysis_content_improve(content_list):
                 push_mark_end = content.index(push_mark_index_end,push_mark_start)
                 push_mark = content[push_mark_start:push_mark_end]
 
-                print('push_ID_site:',push_ID_start,push_ID_end)
-                print("push_mark_site",push_mark_start,push_mark_end)
+              #  print('push_ID_site:',push_ID_start,push_ID_end)
+             #   print("push_mark_site",push_mark_start,push_mark_end)
 
 
                 push_start = content.index(push_index_start,push_ID_end)
@@ -421,8 +419,9 @@ def test():
 def test_analysis_improve():
     n = '\n'
     test_link = ['http://www.ptt.cc/bbs/PC_Shopping/M.1488717900.A.525.html']
-    content,link_data = crawler_content_improve(google_custom_search_crawler("heaviest",10,20))
-    all_list = analysis_content_improve(content)
+    ID = "heaviest"
+    content,link_data = crawler_content_improve(google_custom_search_crawler(ID,10,20))
+    all_list = analysis_content_improve(content,ID)
 #    content,link_data= crawler_content_improve(test_link)
 #    all_list = analysis_content_improve(content)
  #   print(all_list)
