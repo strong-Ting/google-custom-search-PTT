@@ -490,8 +490,11 @@ class content_analyst(object):
             except ValueError:
                 exception = True
                 ID_push_content = None
-            
-            ID_push_content_list.append(ID_push_content)
+
+            if ID_push_content == None:
+                pass
+            else:            
+                ID_push_content_list.append(ID_push_content.strip('\n'))
 
         return ID_push_content_list
 
@@ -520,7 +523,32 @@ class content_analyst(object):
 
         return post_content
                
+    def run(self):
 
+        data_dict = {}
+
+        title = self.title()
+        ip = self.ip()
+        board = self.board()
+        date =  self.date()
+        author = self.author()
+        
+        data_dict['title'] = title
+        data_dict['ip'] = ip
+        data_dict['board'] = board
+        data_dict['date'] =date
+        data_dict['author'] = author
+
+        if author == self.__queryID:
+            post_content = self.post_content(date)
+            data_dict['post_content'] = post_content
+        else:
+            push = self.push()
+            data_dict['push'] =push
+    
+        return data_dict    
+        
+            
 def test(ID,queryNum,page):
     PTT = PTT_ID_searcher(ID,int(queryNum))
     
@@ -530,6 +558,7 @@ def test(ID,queryNum,page):
         print(link)
         content = PTT.content_crawler(link)
         analyst = content_analyst(content,ID)
+        '''
         title = analyst.title()
         ip = analyst.ip()
         board = analyst.board()
@@ -538,9 +567,9 @@ def test(ID,queryNum,page):
         ID_push = analyst.push()
         post_content = analyst.post_content(date)
     #    print(title,ip,board,author)
-        print(post_content)
-test('heaviest',10,1)
-
+        '''
+        data_dict = analyst.run()
+        print(data_dict)
 
 '''
 ID = input("search_ID:")
@@ -548,3 +577,17 @@ query_num = input("query_num:")
 page = input("page:")
 
 '''
+
+ID ='heaviest'
+queryNum = 10
+page = 1
+
+
+#test(ID,queryNum,page)
+
+
+
+
+
+
+
