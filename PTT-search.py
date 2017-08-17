@@ -1,12 +1,13 @@
 from flask import Flask
-from searchPTT import *
+from searchPTT_object import *
+import time
 app = Flask(__name__)
 
 
 @app.route('/query/<ID>')
 def print_result(ID):
- 
-    content,link_data = crawler_content_improve(google_custom_search_crawler(ID,3,4))
+    start_time = time.time()
+    content,link_data = crawler_content_improve(google_custom_search_crawler(ID,5,1))
     all_list = analysis_content_improve(content,ID)
     n = '</br>'
     result = ''
@@ -14,6 +15,9 @@ def print_result(ID):
         result = result+n+n+n+link_data[i]+n
         for now in all_list[i]:
             result = result + now + n
+    end_time = time.time()
+    spend_time = end_time -start_time
+    print(spend_time)
     return result
 
 if __name__ == '__main__':

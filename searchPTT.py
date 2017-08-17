@@ -333,6 +333,7 @@ def analysis_content_improve(content_list,ID):
             board_start=content.index(board_index_start,board_end)+len(board_index_start)
             board_end = content.index(board_index_end,board_start)
             board = content[board_start:board_end]
+
             temp_list.append(board)
 
             author_start = content.index(author_index_start,author_end)+len(author_index_start)
