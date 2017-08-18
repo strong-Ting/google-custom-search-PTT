@@ -432,18 +432,26 @@ class content_analyst(object):
 
         content = self.__content
         ID =  self.__queryID
-
-        push_mark_start=0
-        push_mark_end=0
-        push_start=0
-        push_end=0     
-        push_time_start =0
-        push_time_end = 0
-        push_ID_start = 0
-        push_ID_end = 0        
-
+        
         push_mark = None
- 
+        exception = False
+
+        try: 
+            start_push_index = '※ 發信站: 批踢踢實業坊(ptt.cc),'
+                #to avoid catch signature line
+            start_index = content.index(start_push_index)
+
+            push_mark_start = start_index
+            push_mark_end = start_index
+            push_start = start_index
+            push_end = start_index
+            push_time_start =start_index
+            push_time_end = start_index
+            push_ID_start = start_index
+            push_ID_end = start_index     
+        except ValueError:
+            exception = True
+
         ID_push_content_list = []
 
         push_mark_index_start = 'push-tag">'
@@ -458,7 +466,6 @@ class content_analyst(object):
         push_time_index_start ='<span class="push-ipdatetime">'
         push_time_index_end = '</span>'
 
-        exception = False
 
         while exception != True:
             
@@ -508,7 +515,7 @@ class content_analyst(object):
 
         try:
             post_content_index_start = date +'</span></div>' 
-            post_content_index_end = '<span class="f2">'
+            post_content_index_end = '<span class="f2">※ 發信站: 批踢踢實業坊(ptt.cc)'
 
         
         
@@ -524,28 +531,37 @@ class content_analyst(object):
         return post_content
                
     def run(self):
-
+    #have query problem about push == none and author != queryID
         data_dict = {}
+        containID = False
 
-        title = self.title()
-        ip = self.ip()
-        board = self.board()
-        date =  self.date()
         author = self.author()
-        
-        data_dict['title'] = title
-        data_dict['ip'] = ip
-        data_dict['board'] = board
-        data_dict['date'] =date
-        data_dict['author'] = author
+        date =  self.date()
 
         if author == self.__queryID:
             post_content = self.post_content(date)
             data_dict['post_content'] = post_content
+            containID = True
         else:
             push = self.push()
-            data_dict['push'] =push
-    
+            if len(push):
+                data_dict['push'] =push
+                containID = True
+            else:
+                pass
+
+        if containID:
+            title = self.title()
+            ip = self.ip()
+            board = self.board()
+             
+            data_dict['title'] = title
+            data_dict['ip'] = ip
+            data_dict['board'] = board
+            data_dict['date'] =date
+            data_dict['author'] = author
+
+
         return data_dict    
         
             
