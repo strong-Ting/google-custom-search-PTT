@@ -267,6 +267,8 @@ class PTT_ID_searcher(object):
 
         start_time = time.time()
         link_data=[]
+
+        page = page * self.__queryNum
    
         query_url = "https://www.googleapis.com/customsearch/v1element?"
         key = "key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY"
@@ -586,20 +588,6 @@ def test(ID,queryNum,page):
         '''
         data_dict = analyst.run()
         print(data_dict)
-
-'''
-ID = input("search_ID:")
-query_num = input("query_num:")
-page = input("page:")
-
-'''
-
-ID ='heaviest'
-queryNum = 10
-page = 1
-
-
-#test(ID,queryNum,page)
 
 
 
